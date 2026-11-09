@@ -1,11 +1,15 @@
-"""Cross-platform entry point (macOS / Windows / Linux).
+"""print-upscale: free AI upscaling of PDFs and images to print quality.
+Cross-platform entry point (macOS / Windows / Linux).
 
-    Mac:      python3 scripts/run.py "INPUT.pdf" [OUTPUT.pdf] [options]
-    Windows:  py -3 scripts\\run.py "INPUT.pdf" [OUTPUT.pdf] [options]
+    Mac:      python3 scripts/run.py INPUT [INPUT ...] [-o OUTPUT] [options]
+    Windows:  py -3 scripts\\run.py INPUT [INPUT ...] [-o OUTPUT] [options]
+
+INPUT: a .pdf, an image (.jpg .png .webp .bmp .tif) or a folder of them.
+Output: "<name> - HD.pdf" / "<name> - HD.jpg" (".png" if transparent) next to the input.
+Options: --max-side 8000  --png  --jpeg-quality 95  --min-side 64  --setup-only
 
 On first run it creates a private Python environment and downloads the AI model
-(about 500 MB, once). Then it upscales the PDF with enhance_pdf.py.
-Use `--setup-only` to just install.
+(about 500 MB, once).
 """
 import os, platform, shutil, subprocess, sys, urllib.request
 
@@ -14,11 +18,11 @@ IS_WIN = os.name == "nt"
 IS_MAC = sys.platform == "darwin"
 
 def home_dir():
-    if os.environ.get("PDF_ENHANCE_HOME"):
-        return os.environ["PDF_ENHANCE_HOME"]
+    if os.environ.get("PRINT_UPSCALE_HOME"):
+        return os.environ["PRINT_UPSCALE_HOME"]
     if IS_WIN:
-        return os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "pdf-enhance")
-    return os.path.join(os.path.expanduser("~"), ".cache", "pdf-enhance")
+        return os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "print-upscale")
+    return os.path.join(os.path.expanduser("~"), ".cache", "print-upscale")
 
 HOME = home_dir()
 VENV = os.path.join(HOME, "venv")
@@ -29,7 +33,7 @@ STAMP = os.path.join(HOME, ".installed-v1")
 BASE_PKGS = ["pymupdf", "pillow", "numpy", "spandrel", "packaging", "safetensors"]
 
 def log(msg):
-    print(f"[pdf-enhance] {msg}", flush=True)
+    print(f"[print-upscale] {msg}", flush=True)
 
 def pip(*args):
     subprocess.check_call([VPY, "-m", "pip", "install", "--disable-pip-version-check", "-q", *args])
@@ -82,8 +86,8 @@ def main():
         return
     if not args or args[0] in ("-h", "--help"):
         print(__doc__); return
-    env = dict(os.environ, PDF_ENHANCE_HOME=HOME, PYTHONIOENCODING="utf-8")
-    sys.exit(subprocess.call([VPY, "-I", os.path.join(HERE, "enhance_pdf.py"), *args], env=env))
+    env = dict(os.environ, PRINT_UPSCALE_HOME=HOME, PYTHONIOENCODING="utf-8")
+    sys.exit(subprocess.call([VPY, "-I", os.path.join(HERE, "upscale.py"), *args], env=env))
 
 if __name__ == "__main__":
     main()
